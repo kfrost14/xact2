@@ -2,7 +2,7 @@ if(!require(shiny)){install.package("shiny")}
 if(!require(gridExtra)){install.package("gridExtra")}
 if(!require(openair)){install.package("openair")}
 if(!require(devtools)){install.package("devtools")}
-install_github("rCharts","ramnathv")
+ install_github("rCharts","ramnathv")
 
 library(rCharts)
 library(shiny)
@@ -242,17 +242,18 @@ shinyServer(function(input, output,session)
         print(sp, position = c(0,0,0.5,0.33), more = TRUE)
         print(sp2, position = c(0.5,0,1,0.33))
     
-        print(grid.text(x = 0.11, y = 0.56, label ="--- Rfc", just="left"))
-        print(grid.text(x = 0.11, y = 0.58, label ="--- SAT Screening Level", just="left")) 
-        print(grid.text(x = 0.60, y = 0.56, label ="--- Rfc", just="left"))
-        print(grid.text(x = 0.60, y = 0.58, label ="--- SAT Screening Level", just="left")) 
-        print(grid.text(x = 0.11, y = 0.24, label ="--- Rfc", just ="left"))
-        print(grid.text(x = 0.11, y = 0.26, label ="--- SAT Screening Level", just="left")) 
-        print(grid.text(x = 0.60, y = 0.24, label ="--- Rfc", just="left"))
-        print(grid.text(x = 0.60, y = 0.26, label ="--- SAT Screening Level", just="left")) 
+        print(grid.text(x = 0.11, y = 0.53, label ="--- Rfc", just="left"))
+        print(grid.text(x = 0.11, y = 0.55, label ="--- SAT Screening Level", just="left")) 
+        print(grid.text(x = 0.60, y = 0.53, label ="--- Rfc", just="left"))
+        print(grid.text(x = 0.60, y = 0.55, label ="--- SAT Screening Level", just="left")) 
+        print(grid.text(x = 0.11, y = 0.21, label ="--- Rfc", just ="left"))
+        print(grid.text(x = 0.11, y = 0.23, label ="--- SAT Screening Level", just="left")) 
+        print(grid.text(x = 0.60, y = 0.21, label ="--- Rfc", just="left"))
+        print(grid.text(x = 0.60, y = 0.23, label ="--- SAT Screening Level", just="left")) 
     }
     
-  },   height=830)
+   },   height=650)
+   
   
     
 ##Creates leaflet map to display site location on the side panel #    

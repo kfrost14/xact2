@@ -18,8 +18,9 @@ shinyUI(pageWithSidebar(
                        uiOutput("long"),
                        p(textOutput("map_text")),
                        showOutput('mymap','leaflet'),
-                       htmlOutput("sideplot"),
-                       br()
+#                        htmlOutput("sideplot"),
+                       br(),
+                       checkboxInput("log","Log-scale",value=FALSE)
 #                        ,
 #                      downloadButton('downloadData', 'Download')
 
@@ -48,8 +49,8 @@ shinyUI(pageWithSidebar(
              
                   h5(textOutput("head_text")),
                   h6(textOutput("err_message")),
-                  plotOutput("main_plot",height="auto"),
-                  checkboxInput("log","Log-scale",value=FALSE)),
+                  plotOutput("main_plot",height="auto")
+                  ),
     
 
     tabPanel("Upload & View Raw Xact Data",value=2,
