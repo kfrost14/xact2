@@ -1,7 +1,7 @@
 xact2
 =====
 
-xact2 is a Shiny web application that displays hourly data from the Xact monitor using plots from the openair package.
+xact2 is a repository for the "Xact Data Explorer" Shiny web application that displays hourly data from the Xact monitor using plots from the openair package.
 
 It requires the installation of rCharts from GitHub using the devtools package
 
