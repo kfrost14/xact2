@@ -5,10 +5,10 @@ xact2 is a Shiny web application that displays hourly data from the Xact monitor
 
 It requires the installation of rCharts from GitHub using the devtools package
 
-  require(devtools)
-  install_github('rCharts', 'ramnathv')
+  	require(devtools)
+  	install_github('rCharts', 'ramnathv')
 
 The app can be run from your desktop using the runGitHub() function from the Shiny package
 
-  require(shiny)
-  runGitHub('xact2', 'kfrost14')
+  	require(shiny)
+  	runGitHub('xact2', 'kfrost14')
