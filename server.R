@@ -1,12 +1,12 @@
+if(!require(shiny)){install.package("shiny")}
 if(!require(gridExtra)){install.package("gridExtra")}
 if(!require(openair)){install.package("openair")}
-if(!require(shiny)){install.package("shiny")}
-
 
 library(rCharts)
 library(shiny)
 library(gridExtra)
 library(openair)
+
 
 options(RCHART_WIDTH = 350)
 options(RCHART_HEIGHT = 300)
