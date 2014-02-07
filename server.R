@@ -1,14 +1,12 @@
-if(!require(shiny)){install.package("shiny")}
 if(!require(gridExtra)){install.package("gridExtra")}
 if(!require(openair)){install.package("openair")}
-if(!require(devtools)){install.package("devtools")}
- install_github("rCharts","ramnathv")
+if(!require(shiny)){install.package("shiny")}
+
 
 library(rCharts)
 library(shiny)
 library(gridExtra)
 library(openair)
-library(rCharts)
 
 options(RCHART_WIDTH = 350)
 options(RCHART_HEIGHT = 300)
