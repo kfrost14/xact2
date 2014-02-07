@@ -252,7 +252,7 @@ shinyServer(function(input, output,session)
         print(grid.text(x = 0.60, y = 0.23, label ="--- SAT Screening Level", just="left")) 
     }
     
-   },   height=650)
+   },   height=750)
    
   
     
