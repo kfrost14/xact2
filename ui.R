@@ -28,11 +28,11 @@ shinyUI(pageWithSidebar(
                        
       conditionalPanel(condition="input.contab==2"
                        ,
-                       
-                       
-                       fileInput('upDataUSS', "Upload US Steel Xact CSV Files", multiple = FALSE,
+                       h6("Upload each data set here. To change table views, alter your site choice on the Xact Monitoring tab"),
+                       uiOutput("radio"),
+                       fileInput('upDataUSS', "Upload US Steel Xact CSV File", multiple = FALSE,
                                  accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv')),
-                       fileInput('upDataBH', "Upload Burns Harbor Xact CSV Files", multiple = FALSE,
+                       fileInput('upDataBH', "Upload Burns Harbor Xact CSV File", multiple = FALSE,
                                  accept=c('text/csv', 'text/comma-separated-values,text/plain', '.csv'))
                        
               

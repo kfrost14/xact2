@@ -131,6 +131,9 @@ shinyServer(function(input, output,session)
   output$err_message <- renderText( {
      mess()
    })
+
+    
+    
   
   output$xactTable <- renderTable( {
     view_data <- InputUpload()
@@ -173,6 +176,7 @@ shinyServer(function(input, output,session)
  
    })
 
+  
   output$head_text <- renderText(paste(input$site, 'Xact Monitoring Data', sep =" "))
   
   output$map_text <- renderText(paste(input$site, 'Monitoring Site', sep =" "))
@@ -229,7 +233,7 @@ shinyServer(function(input, output,session)
       
       sp2 <- scatterPlot(xact_gr, x = "date", y = "param", z = "wd", xlab = "2012-2013", ylab = NULL,
                          key.position = "right", ref.y = c(rfc4,rfc5), log.y = TRUE, date.format = "%b-%Y",
-                         main = paste("Hourly", plotlab2," by Wind Direction", sep =""))
+                         main = paste("Hourly", plotlab2," by Wind Direction", sep =" "))
       
     }
     
