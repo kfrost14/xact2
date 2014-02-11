@@ -1,4 +1,4 @@
-setwd("R:/Development/Kali/xact/xact2")
+
 if(!require(shiny)){install.package("shiny")}
 if(!require(gridExtra)){install.package("gridExtra")}
 if(!require(openair)){install.package("openair")}
@@ -141,9 +141,8 @@ shinyServer(function(input, output,session)
   output$site <- renderUI({
 
               selectInput("site", "Choose a study site:", 
-              choices = c("US Steel","Burns Harbor"))
-#                           ,
-#               selected = "US Steel")
+              choices = c("US Steel","Burns Harbor")),
+              selected = "US Steel")
 
  })
   
