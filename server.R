@@ -141,7 +141,7 @@ shinyServer(function(input, output,session)
   output$site <- renderUI({
 
               selectInput("site", "Choose a study site:", 
-              choices = c("US Steel","Burns Harbor")),
+              choices = c("US Steel","Burns Harbor"),
               selected = "US Steel")
 
  })
