@@ -1,7 +1,7 @@
 
-if(!require(shiny)){install.package("shiny")}
-if(!require(gridExtra)){install.package("gridExtra")}
-if(!require(openair)){install.package("openair")}
+if(!require(shiny)){install.packages("shiny")}
+if(!require(gridExtra)){install.packages("gridExtra")}
+if(!require(openair)){install.packages("openair")}
 
 library(rCharts)
 library(shiny)
