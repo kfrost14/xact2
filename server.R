@@ -1,3 +1,4 @@
+setwd("R:/Development/Kali/xact/xact2")
 if(!require(shiny)){install.package("shiny")}
 if(!require(gridExtra)){install.package("gridExtra")}
 if(!require(openair)){install.package("openair")}
@@ -6,7 +7,6 @@ library(rCharts)
 library(shiny)
 library(gridExtra)
 library(openair)
-
 
 options(RCHART_WIDTH = 350)
 options(RCHART_HEIGHT = 300)
@@ -32,7 +32,6 @@ shinyServer(function(input, output,session)
               
      }
 
-    
                     else{
                       Lat <- as.numeric(input$lat)
                       Lon<- as.numeric(input$long)                      
@@ -45,44 +44,47 @@ shinyServer(function(input, output,session)
                        return(site)
                                     })
 
-
  
 ## This function handles the csv file of Xact monitoring data uploaded by user which can be fed into graphs and tables #
   InputUpload <- reactive( {
+    if (input$site=="US Steel") {
     
-    if (input$site=="US Steel"){
-      xact_file <- read.csv("xact_raw.csv",header=TRUE,stringsAsFactors=FALSE)
-    }
-  else
-    {
-      inFile <- input$upData
-      
-      if (is.null(inFile))
-        return (NULL)
-      
-      xact_file <- read.csv(inFile$datapath)  
-  }
-      return (xact_file)
-          
-  })
+      inFileUSS <- input$upDataUSS
+       if (is.null(inFileUSS)) 
+         return (NULL)
+      xact_file <- read.csv(inFileUSS$datapath) 
+   }
+
+
+   else {
+    
+        if(input$site=="Burns Harbor"){
+      inFileBH <- input$upDataBH
+       if (is.null(inFileBH))
+         return (NULL)            
+          xact_file <- read.csv(inFileBH$datapath) 
+
+     }
+        }
+
+     return (xact_file)
+           
+   })
   
 ## This function uses user-uploaded Xact monitoring data or US Steel existing data 
 ##  and merges with Gary meteorological data for use in openair plots #
   xactInput<-reactive({ 
-    
 
-    xact <- as.data.frame(InputUpload())
-    colnames(xact) <- c("date","AT.C",  "BP.mmHg",  "ALARM",  "Potassium", "Calcium", "Titanium", 
-                        "Chromium", "Manganese", "Iron", "Cobalt", "Nickel", "Copper", "Zinc", 
-                        "Arsenic", "Selenium", "Bromine", "Rubidium", "Strontium", "Molybdenm", 
-                        "Cadmium", "Antimony", "Barium", "Mercury", "Thallium", "Lead", "Thorium")
-      
+      xact<-as.data.frame(InputUpload())
+        
+      colnames(xact) <- c("date","AT.C",  "BP.mmHg",  "ALARM",  "Potassium", "Calcium", "Titanium", 
+                          "Chromium", "Manganese", "Iron", "Cobalt", "Nickel", "Copper", "Zinc", 
+                          "Arsenic", "Selenium", "Bromine", "Rubidium", "Strontium", "Molybdenm", 
+                          "Cadmium", "Antimony", "Barium", "Mercury", "Thallium", "Lead", "Thorium")
       
       
       date2 <- as.POSIXct(strptime(xact[,1], format="%m/%d/%Y %H:%M", tz="UTC"))
-#       date3<-  as.POSIXct(strptime(xact[,2], format="%m/%d/%Y", tz="UTC"))
-    
-        date2 <- format(date2, format="%Y-%m-%d %H:%M:%S", tz="UTC")
+      date2 <- format(date2, format="%Y-%m-%d %H:%M:%S", tz="UTC")
       xact <- cbind(date2, xact[,2:27])
       
       gary_met <- as.data.frame(local(get(load("gary_met_wide.rda"))), stringsAsFactors=FALSE)
@@ -92,33 +94,41 @@ shinyServer(function(input, output,session)
       xact.vec <- xact_met[c(eval(xact_param))]
       xact <- data.frame(xact_met[,1], xact.vec, xact_met[,28:36])
       colnames(xact)<- c("date","param","YEAR","MONTH","DAY","HOUR","ws","wd","std dev hz wd","temp","precip")
-
-  
+      
+   
     return (xact)
-    
-
-  })  
+  })
   
-  
- ##Function which allows subsetted data to be downloaded by user in .csv format #
+##Function which allows subsetted data to be downloaded by user in .csv format #
   output$downloadData <- downloadHandler(
-    filename = function() { paste(input$param, '.csv', sep='') },
+    filename = function() { paste(input$site,input$param, '.csv', sep='') },
     content = function(file) {
       write.csv(xactInput(), file,row.names=F)
       
     })
+
   
-##This function returns an error message if the use selects Burns Harbor but has not uploaded a dataset #
+##This function returns an error message if the user selects a site 
+  ##but has not yet uploaded the associated dataset #
   mess<-reactive({
+   if (input$site=="US Steel" ) {
+       err <- InputUpload()
+      errmess <- c("You must first upload US Steel Xact data via the Upload tab")}
+   else{
+    if(input$site=="Burns Harbor")  {
+       err <- InputUpload()
+     errmess <- c("You must first upload Burns Harbor Xact data via the Upload tab")
+     }
+   }
+     if (is.null(err)) 
+    return (errmess) 
    
-      err <- InputUpload()
-      errmess <- c("You must first upload Xact data via the Upload tab")
-    if (is.null(err)) {
-    return (errmess)}
-    
    })
     
-   output$err_message <- renderText( {
+   
+  
+  
+  output$err_message <- renderText( {
      mess()
    })
   
@@ -127,21 +137,18 @@ shinyServer(function(input, output,session)
     return (view_data[1:10,])
   })
   
-
+##Creates UI for user site choice##
   output$site <- renderUI({
 
               selectInput("site", "Choose a study site:", 
-              choices = c("US Steel","Burns Harbor"),
-              selected = "US Steel")
-
-              selectInput("site", "Choose a study site:", 
-              choices = c("US Steel","Burns Harbor"),
-              selected = "US Steel")
-       
- 
+              choices = c("US Steel","Burns Harbor"))
+#                           ,
+#               selected = "US Steel")
 
  })
   
+ 
+  ##Creates UI for user parameter choice##
   output$param <- renderUI({
           xact_param <- c("Potassium", "Calcium", "Titanium", "Chromium", "Manganese", 
                  "Iron", "Cobalt", "Nickel", "Copper", "Zinc", "Arsenic", "Selenium", 
@@ -152,7 +159,6 @@ shinyServer(function(input, output,session)
               choices = c(sort(unique(xact_param))),
               selected = "Manganese")
  })
-  
   
   
 ##Creates text inputs for user-provided lat-long  #
@@ -173,17 +179,12 @@ shinyServer(function(input, output,session)
   output$map_text <- renderText(paste(input$site, 'Monitoring Site', sep =" "))
 
 ##Creates openair plots for display on the main panel #
-  output$main_plot <- renderPlot({
-    if (input$contab==1) {
-    mess <- "Please upload Xact csv to view data"
-    err <- InputUpload()
-    }
-    if (is.null(err)) {
-      return (NULL)
-    }
-    else {
+   output$main_plot <- renderPlot({
+
+      
+      xact_gr<-xactInput()
     
-    xact_gr <- xactInput()
+   
     
 
       plotlab1 <- input$site
@@ -195,8 +196,8 @@ shinyServer(function(input, output,session)
       rfc5 <- log10(rfc3)
     
    
-      pr<-pollutionRose(xact_gr,ws="ws",wd="wd",pollutant="param",main=paste0("Pollution Rose Plot for 2012-2013 ",plotlab2))
-      perR<-percentileRose(xact_gr,plot.transparent=TRUE,pollutant="param", percentile=c(0,5,25,50,75,95,99),key.position="right",main=paste0("Percentile Rose Plot for 2012-2013 ",plotlab2))
+      pr<-pollutionRose(xact_gr,ws="ws",wd="wd",pollutant="param",main=paste0(plotlab1," Pollution Rose Plot for 2012-2013 ",plotlab2))
+      perR<-percentileRose(xact_gr,plot.transparent=TRUE,pollutant="param", percentile=c(0,5,25,50,75,95,99),key.position="right",main=paste0(plotlab1," Percentile Rose Plot for 2012-2013 ",plotlab2))
 
     
     if (input$log==FALSE) {
@@ -233,6 +234,7 @@ shinyServer(function(input, output,session)
       
     }
     
+      
         print(perR, position = c(0,0.66,0.5,1), more = TRUE)
         print(pr, position = c(0.5,0.66,1,1), more = TRUE)
         print(tp, position = c(0,0.33,0.5,0.65), more = TRUE)
@@ -248,11 +250,11 @@ shinyServer(function(input, output,session)
         print(grid.text(x = 0.11, y = 0.23, label ="--- SAT Screening Level", just="left")) 
         print(grid.text(x = 0.60, y = 0.21, label ="--- Rfc", just="left"))
         print(grid.text(x = 0.60, y = 0.23, label ="--- SAT Screening Level", just="left")) 
-    }
+     
     
    },   height=725)
    
-  
+ 
     
 ##Creates leaflet map to display site location on the side panel #    
   output$mymap <- renderMap( {
