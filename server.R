@@ -64,7 +64,6 @@ shinyServer(function(input, output,session)
  
   xactInput<-reactive({ 
 
-#       xact<-as.data.frame(input$upData[1])
       xact<-selectedData()
       xact<-as.data.frame(xact)
         
