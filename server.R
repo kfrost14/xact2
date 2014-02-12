@@ -8,9 +8,11 @@ library(shiny)
 library(gridExtra)
 library(openair)
 
+
 options(RCHART_WIDTH = 350)
 options(RCHART_HEIGHT = 300)
 
+#Load csv file with Rfc and EPA Screening Levels for metals#
 rfc<-read.csv("rfc.csv",colClasses=c("character","numeric","numeric"))
 
 ## Define server logic required to summarize and view the selected dataset #
@@ -18,64 +20,53 @@ shinyServer(function(input, output,session)
 
   {
   
-##Based on site location chosen by user, either use existing lat-lon information for
-##US Steel or utilize user-provided lat-lon for alternate site #
+  siteData <- reactiveValues()
+  
+  ## Watches for data uploads and saves the location and adds the name to the site input#
+  addData <- observe({
+    if(!is.null(input$upData$name)) {
+      siteData[[input$upData$name]] <- input$upData$datapath
+      updateSelectInput(session, "site", choices = names(siteData),
+                        selected = input$upData$name)
+    }
+  })
+  
+  ## stores the currently selected dataset#
+  selectedData <- reactive({
+    
+    read.csv(siteData[[input$site]], stringsAsFactors = FALSE)
+    
+  })
+  
+   
+  ## Display Raw Data in Raw Data Tab
+  output$xactTable <- renderDataTable(selectedData())
+  
+  ##Based on site location chosen by user, either use existing lat-lon information for
+  ##US Steel or utilize user-provided lat-lon for alternate site #
   siteInput<-reactive({
 
  
-     if (input$site=="US Steel")
-       {
-              Lat <- 41.6035
-              Lon <- -87.3326
-              tooltip <- paste(input$site,"Xact Monitor",sep=" ")
-              site <- data.frame(Lat,Lon,tooltip)
-              
-     }
-
-                    else{
                       Lat <- as.numeric(input$lat)
                       Lon<- as.numeric(input$long)                      
-                      tooltip <- paste(input$site,"Xact Monitor",sep=" ")
+                      tooltip <- paste(input$site2,"Xact Monitor",sep=" ")
 
                         
                      site <- data.frame(Lat,Lon,tooltip)
-                           }                                                    
+                                                                              
                                        
                        return(site)
                                     })
-
- 
-## This function handles the csv file of Xact monitoring data uploaded by user which can be fed into graphs and tables #
-  InputUpload <- reactive( {
-    if (input$site=="US Steel") {
-    
-      inFileUSS <- input$upDataUSS
-       if (is.null(inFileUSS)) 
-         return (NULL)
-      xact_file <- read.csv(inFileUSS$datapath) 
-   }
-
-
-   else {
-    
-        if(input$site=="Burns Harbor"){
-      inFileBH <- input$upDataBH
-       if (is.null(inFileBH))
-         return (NULL)            
-          xact_file <- read.csv(inFileBH$datapath) 
-
-     }
-        }
-
-     return (xact_file)
-           
-   })
+   
   
-## This function uses user-uploaded Xact monitoring data or US Steel existing data 
+## This function uses user-uploaded Xact monitoring data 
 ##  and merges with Gary meteorological data for use in openair plots #
+ 
   xactInput<-reactive({ 
 
-      xact<-as.data.frame(InputUpload())
+#       xact<-as.data.frame(input$upData[1])
+      xact<-selectedData()
+      xact<-as.data.frame(xact)
         
       colnames(xact) <- c("date","AT.C",  "BP.mmHg",  "ALARM",  "Potassium", "Calcium", "Titanium", 
                           "Chromium", "Manganese", "Iron", "Cobalt", "Nickel", "Copper", "Zinc", 
@@ -99,58 +90,17 @@ shinyServer(function(input, output,session)
     return (xact)
   })
   
-##Function which allows subsetted data to be downloaded by user in .csv format #
+## Function which allows subsetted data to be downloaded by user in .csv format #
   output$downloadData <- downloadHandler(
-    filename = function() { paste(input$site,input$param, '.csv', sep='') },
+    filename = function() { paste(input$site2,input$param, '.csv', sep='') },
     content = function(file) {
       write.csv(xactInput(), file,row.names=F)
       
     })
 
-  
-##This function returns an error message if the user selects a site 
-  ##but has not yet uploaded the associated dataset #
-  mess<-reactive({
-   if (input$site=="US Steel" ) {
-       err <- InputUpload()
-      errmess <- c("You must first upload US Steel Xact data via the Upload tab")}
-   else{
-    if(input$site=="Burns Harbor")  {
-       err <- InputUpload()
-     errmess <- c("You must first upload Burns Harbor Xact data via the Upload tab")
-     }
-   }
-     if (is.null(err)) 
-    return (errmess) 
-   
-   })
-    
-   
-  
-  
-  output$err_message <- renderText( {
-     mess()
-   })
 
-    
-    
-  
-  output$xactTable <- renderTable( {
-    view_data <- InputUpload()
-    return (view_data[1:10,])
-  })
-  
-##Creates UI for user site choice##
-  output$site <- renderUI({
-
-              selectInput("site", "Choose a study site:", 
-              choices = c("US Steel","Burns Harbor"),
-              selected = "US Steel")
-
- })
-  
  
-  ##Creates UI for user parameter choice##
+  ## Creates UI for user parameter choice #
   output$param <- renderUI({
           xact_param <- c("Potassium", "Calcium", "Titanium", "Chromium", "Manganese", 
                  "Iron", "Cobalt", "Nickel", "Copper", "Zinc", "Arsenic", "Selenium", 
@@ -163,7 +113,7 @@ shinyServer(function(input, output,session)
  })
   
   
-##Creates text inputs for user-provided lat-long  #
+## Creates text inputs for user-provided lat-long  #
   output$lat<-renderUI( {
 
     textInput("lat", "Latitude (DD):", value="") 
@@ -176,63 +126,67 @@ shinyServer(function(input, output,session)
  
    })
 
+ ## Creates header label for graphical output using name of csv file #
+ header<-reactive({
+   plotlab <- input$site
+   plotlab1 <- sub(".csv","",plotlab)
+   return(plotlab1)
+ }) 
   
-  output$head_text <- renderText(paste(input$site, 'Xact Monitoring Data', sep =" "))
+   output$head_text <- renderText(paste(header(), 'Data', sep =" "))
   
-  output$map_text <- renderText(paste(input$site, 'Monitoring Site', sep =" "))
+   output$map_text <- renderText(paste(header(), 'Monitoring Site', sep =" "))
 
-##Creates openair plots for display on the main panel #
+## Creates openair plots for display on the main panel #
    output$main_plot <- renderPlot({
 
       
       xact_gr<-xactInput()
     
-   
-    
-
-      plotlab1 <- input$site
+#       plotlab <- input$site
+#       plotlab1 <- sub(".csv","",plotlab)
       plotlab2 <- input$param
        
-      rfc2 <- rfc[rfc$Parameter==input$param,2]
-      rfc3 <- rfc[rfc$Parameter==input$param,3]
-      rfc4 <- log10(rfc2)
-      rfc5 <- log10(rfc3)
+      Rfc <- rfc[rfc$Parameter==input$param,2]
+      EPA_SL <- rfc[rfc$Parameter==input$param,3]
+      Rfc_log <- log10(Rfc)
+      EPA_SL_log <- log10(EPA_SL)
     
    
-      pr<-pollutionRose(xact_gr,ws="ws",wd="wd",pollutant="param",main=paste0(plotlab1," Pollution Rose Plot for 2012-2013 ",plotlab2))
-      perR<-percentileRose(xact_gr,plot.transparent=TRUE,pollutant="param", percentile=c(0,5,25,50,75,95,99),key.position="right",main=paste0(plotlab1," Percentile Rose Plot for 2012-2013 ",plotlab2))
+      pr<-pollutionRose(xact_gr,ws="ws",wd="wd",pollutant="param",main=paste0("Pollution Rose Plot for 2012-2013 ",plotlab2))
+      perR<-percentileRose(xact_gr,plot.transparent=TRUE,pollutant="param", percentile=c(0,5,25,50,75,95,99),key.position="right",main=paste0("Percentile Rose Plot for 2012-2013 ",plotlab2))
 
     
     if (input$log==FALSE) {
     
       tp <- timePlot(xact_gr, pollutant ="param", key = FALSE, ylab ="Concentration (ng/m3)",
-                   main = paste("Hourly", plotlab2, sep =" "), ref.y = c(rfc3), date.format ="%b %Y", log = FALSE)
+                   main = paste("Hourly", plotlab2, sep =" "), ref.y = c(Rfc,EPA_SL), date.format ="%b %Y", log = FALSE)
     
       tp2 <- timePlot(xact_gr, pollutant ="param", key = FALSE, ylab = NULL, statistic ="max", avg.time ="day",
-                    main = paste("Daily Max", plotlab2, sep =" "), ref.y = c(rfc2,rfc3), date.format ="%b %Y", log = FALSE)
+                    main = paste("Daily Max", plotlab2, sep =" "), ref.y = c(Rfc,EPA_SL), date.format ="%b %Y", log = FALSE)
     
       sp <- scatterPlot(xact_gr, x ="date", y ="param", z ="ws", xlab ="2012-2013", ylab ="Concentration (ng/m3)",
-                      key.position ="right", ref.y = c(rfc2,rfc3), log.y = FALSE,
+                      key.position ="right", ref.y = c(Rfc,EPA_SL), log.y = FALSE,
                       main = paste("Hourly", plotlab2,"by Wind Speed",sep =" "))
     
       sp2 <- scatterPlot(xact_gr, x ="date", y ="param", z ="wd", xlab ="2012-2013", ylab = NULL,
-                       key.position ="right", ref.y = c(rfc2,rfc3), log.y = FALSE,
+                       key.position ="right", ref.y = c(Rfc,EPA_SL), log.y = FALSE,
                        main = paste("Hourly", plotlab2,"by Wind Direction",sep =" "))
     }
     else {
       
       tp <- timePlot(xact_gr, pollutant = "param", key = FALSE, ylab ="Concentration (ng/m3)",
-                     main = paste("Hourly", plotlab2, sep=" "), ref.y = c(rfc4,rfc5), date.format = "%b %Y", log = TRUE)
+                     main = paste("Hourly", plotlab2, sep=" "), ref.y = c(Rfc_log,EPA_SL_log), date.format = "%b %Y", log = TRUE)
       
       tp2 <- timePlot(xact_gr, pollutant ="param", key=FALSE, ylab=NULL, statistic ="max", avg.time ="day",
-                      main = paste("Daily Max", plotlab2, sep=" "), date.format ="%b %Y", ref.y = c(rfc4,rfc5),log = TRUE)
+                      main = paste("Daily Max", plotlab2, sep=" "), date.format ="%b %Y", ref.y = c(Rfc_log,EPA_SL_log),log = TRUE)
       
       sp<- scatterPlot(xact_gr, x ="date", y ="param", z ="ws", xlab="2012-2013", ylab ="Concentration (ng/m3)",
-                       key.position ="right", ref.y = c(rfc4,rfc5),log.y = TRUE,
+                       key.position ="right", ref.y = c(Rfc_log,EPA_SL_log),log.y = TRUE,
                        main = paste("Hourly", plotlab2," by Wind Speed",sep =" "))
       
       sp2 <- scatterPlot(xact_gr, x = "date", y = "param", z = "wd", xlab = "2012-2013", ylab = NULL,
-                         key.position = "right", ref.y = c(rfc4,rfc5), log.y = TRUE, date.format = "%b-%Y",
+                         key.position = "right", ref.y = c(Rfc_log,EPA_SL_log), log.y = TRUE, date.format = "%b-%Y",
                          main = paste("Hourly", plotlab2," by Wind Direction", sep =" "))
       
     }
@@ -245,21 +199,20 @@ shinyServer(function(input, output,session)
         print(sp, position = c(0,0,0.5,0.33), more = TRUE)
         print(sp2, position = c(0.5,0,1,0.33))
     
-        print(grid.text(x = 0.11, y = 0.53, label ="--- Rfc", just="left"))
-        print(grid.text(x = 0.11, y = 0.55, label ="--- SAT Screening Level", just="left")) 
-        print(grid.text(x = 0.60, y = 0.53, label ="--- Rfc", just="left"))
-        print(grid.text(x = 0.60, y = 0.55, label ="--- SAT Screening Level", just="left")) 
-        print(grid.text(x = 0.11, y = 0.21, label ="--- Rfc", just ="left"))
-        print(grid.text(x = 0.11, y = 0.23, label ="--- SAT Screening Level", just="left")) 
-        print(grid.text(x = 0.60, y = 0.21, label ="--- Rfc", just="left"))
-        print(grid.text(x = 0.60, y = 0.23, label ="--- SAT Screening Level", just="left")) 
+        print(grid.text(x = 0.11, y = 0.54, label ="--- Rfc", just="left"))
+        print(grid.text(x = 0.11, y = 0.56, label ="--- SAT Screening Level", just="left")) 
+        print(grid.text(x = 0.60, y = 0.54, label ="--- Rfc", just="left"))
+        print(grid.text(x = 0.60, y = 0.56, label ="--- SAT Screening Level", just="left")) 
+        print(grid.text(x = 0.11, y = 0.22, label ="--- Rfc", just ="left"))
+        print(grid.text(x = 0.11, y = 0.24, label ="--- SAT Screening Level", just="left")) 
+        print(grid.text(x = 0.60, y = 0.22, label ="--- Rfc", just="left"))
+        print(grid.text(x = 0.60, y = 0.24, label ="--- SAT Screening Level", just="left")) 
      
     
    },   height=725)
    
- 
-    
-##Creates leaflet map to display site location on the side panel #    
+     
+## Creates leaflet map to display user-provided site location on the side panel #    
   output$mymap <- renderMap( {
 
     site <- siteInput()
@@ -277,3 +230,4 @@ shinyServer(function(input, output,session)
   
   
   })
+
